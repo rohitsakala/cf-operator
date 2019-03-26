@@ -20,7 +20,7 @@ var templateRenderCmd = &cobra.Command{
 	Use:   "template-render [flags]",
 	Short: "Renders a bosh manifest",
 	Long: `Renders a bosh manifest.
- 
+
 This will render a provided manifest instance-group
 `,
 	RunE: func(cmd *cobra.Command, args []string) error {
@@ -97,7 +97,9 @@ func init() {
 	templateRenderCmd.Flags().StringP("name", "m", "", "name of the instance spec")
 	templateRenderCmd.MarkFlagRequired("name")
 
+	viper.SetEnvPrefix("SPEC")
 	viper.AutomaticEnv()
+	viper.BindEnv("instance_group_name", "INSTANCE_GROUP_NAME")
 	viper.BindPFlag("jobs_dir", templateRenderCmd.Flags().Lookup("jobs-dir"))
 	viper.BindPFlag("instance_group_name", templateRenderCmd.Flags().Lookup("instance-group-name"))
 	viper.BindPFlag("address", templateRenderCmd.Flags().Lookup("address"))
