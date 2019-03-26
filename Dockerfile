@@ -1,6 +1,8 @@
 FROM golang:1.12 AS build
 COPY . /go/src/code.cloudfoundry.org/cf-operator
 RUN cd /go/src/code.cloudfoundry.org/cf-operator && \
+    GO111MODULE=on go mod download
+RUN cd /go/src/code.cloudfoundry.org/cf-operator && \
     GO111MODULE=on make build && \
     cp -p binaries/cf-operator /usr/local/bin/cf-operator
 
