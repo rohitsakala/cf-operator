@@ -396,7 +396,9 @@ func (r *ReconcileBOSHDeployment) createDataGatheringJob(ctx context.Context, in
 			return err
 		}
 
-		if len(secrets.Items) != 1 {
+		if len(secrets.Items) == 0 {
+			return errors.New("no variable interpolation output Secret found")
+		} else if len(secrets.Items) > 1 {
 			return errors.New("variable interpolation must only have one output Secret")
 		}
 
