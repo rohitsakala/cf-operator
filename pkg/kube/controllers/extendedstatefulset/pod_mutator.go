@@ -99,13 +99,16 @@ func (m *PodMutator) mutatePodsFn(ctx context.Context, pod *corev1.Pod) error {
 		pvcList := &corev1.PersistentVolumeClaimList{}
 		err := m.client.List(ctx, opts, pvcList)
 		if err != nil {
-			return errors.Wrapf(err, "Couldn't fetch PVC's")
+			return errors.Wrapf(err, "could not fetch PVC's")
 		}
 
 		// Loop over volumeClaimTemplates
 		for _, volumeClaimTemplate := range volumeClaimTemplateList {
 
-			currentVersionInt := getVersionFromName(pod.Name, 2)
+			currentVersionInt, err := getVersionFromName(pod.Name, 2)
+			if err != nil {
+				return errors.Wrapf(err, "could not get version for pod '%s'", pod.Name)
+			}
 			minVersion := math.MaxInt64
 			minPVCName := ""
 			// loop over pvclist to find the earliest one
@@ -113,7 +116,10 @@ func (m *PodMutator) mutatePodsFn(ctx context.Context, pod *corev1.Pod) error {
 				pvcName := strings.Split(pvc.GetName(), getNameWithOutVersion(pod.Name, 2))[0]
 				pvcName = pvcName[:len(pvcName)-1]
 				if getNameWithOutVersion(pvcName, 1) == getNameWithOutVersion(volumeClaimTemplate.Name, 1) && pvc.Name[len(pvc.Name)-1:] == pod.Name[len(pod.Name)-1:] {
-					pvcVersion := getVersionFromName(pvc.Name, 2)
+					pvcVersion, err := getVersionFromName(pvc.Name, 2)
+					if err != nil {
+						return errors.Wrapf(err, "could not get version for pvc '%s'", pod.Name)
+					}
 					if minVersion > pvcVersion {
 						minVersion = pvcVersion
 						minPVCName = pvc.Name
@@ -174,14 +180,14 @@ func getStatefulSetName(name string) string {
 }
 
 // getVersionFromName fetches version from name
-func getVersionFromName(name string, offset int) int {
+func getVersionFromName(name string, offset int) (int, error) {
 	nameSplit := strings.Split(name, "-")
 	version := string(nameSplit[len(nameSplit)-offset][1])
 	versionInt, err := strconv.Atoi(version)
 	if err != nil {
-		errors.Wrapf(err, "Atoi failed to convert")
+		return versionInt, errors.Wrapf(err, "Atoi failed to convert")
 	}
-	return versionInt
+	return versionInt, nil
 }
 
 // replaceVersionInName replaces with the given version in name at offset
